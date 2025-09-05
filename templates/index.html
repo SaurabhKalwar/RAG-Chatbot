@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insurance Assistant Chatbot</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">Assistant ChatBot, Your Insurance Companion !</div>
+        <div class="chat-window" id="chat-window">
+            <!-- Messages will be appended here -->
+        </div>
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Type your message...">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+    <script>
+        const chatWindow = document.getElementById('chat-window');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+
+        sendButton.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        function sendMessage() {
+            const message = userInput.value.trim();
+            if (message === '') return;
+            appendMessage('user', message);
+            userInput.value = '';
+
+            // Add loading message
+            const loadingElement = document.createElement('div');
+            loadingElement.classList.add('message', 'bot', 'loading');
+            loadingElement.textContent = 'Loading';
+            chatWindow.appendChild(loadingElement);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+
+            fetch('/query', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ question: message }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                chatWindow.removeChild(loadingElement);
+                appendMessage('bot', data.answer);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                chatWindow.removeChild(loadingElement);
+                appendMessage('bot', 'Sorry, something went wrong.');
+            });
+        }
+
+        function appendMessage(sender, text) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', sender);
+            messageElement.textContent = text;
+            chatWindow.appendChild(messageElement);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+    </script>
+</body>
+</html>
